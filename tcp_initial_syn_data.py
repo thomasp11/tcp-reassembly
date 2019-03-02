@@ -6,6 +6,10 @@ import argparse
 cmd_desc = 'Template for sending data with scapy over TCP'
 
 parser = argparse.ArgumentParser(description = cmd_desc)
+parser.add_argument("--initial-data", help = "Data to send in initial TCP SYN packet", 
+                    type = str, nargs = '?', const = 1, default = "initial syn data")
+parser.add_argument("--data", help = "Data to send after 3-way handshake", 
+                    type = str, nargs = '?', const = 1, default = "after 3-way handshake")
 parser.add_argument('ip', help = 'Destination IP Address')
 parser.add_argument('port', help = 'Destination TCP Port', type = int)
 args = parser.parse_args()
@@ -18,8 +22,8 @@ dst_port = args.port
 src_port = random.randint(1024,65535)
 tcp_seq = random.randint(0,4294967295)
 
-initial_syn_data = "data sent with initial tcp packet"
-data = "(this message is what the host will process by default)"
+initial_syn_data = args.initial_data
+data = args.data
 
 # IP header
 ip = IP(dst = dst_ip)

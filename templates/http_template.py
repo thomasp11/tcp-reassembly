@@ -11,6 +11,8 @@ parser.add_argument("--url", help = "URL to GET | default = '/'",
                     type = str, nargs = '?', const = 1, default = '/')
 parser.add_argument("--host", help = "HTTP Host | default = 'www.example.com'", 
                     type = str, nargs = '?', const = 1, default = 'www.example.com')
+parser.add_argument("--wait-time", help = "How long to wait before resetting connection | default = 0.5 sec",
+                    type = float, nargs = '?', const = 1, default = 0.5)
 parser.add_argument('ip', help = 'Destination IP Address')
 parser.add_argument('port', help = 'Destination TCP Port | default = 80',
                     type = int, nargs = '?', const = 1, default = 80)
@@ -23,6 +25,7 @@ dst_ip = args.ip
 dst_port = args.port
 src_port = random.randint(1024,65535)
 tcp_seq = random.randint(0,4294967295)
+wait_time = args.wait_time
 
 # HTTP arguments
 http_url = args.url
@@ -50,17 +53,12 @@ send(ip/ack)
 
 # Send stream
 http_tcp = TCP(sport = src_port, dport = dst_port, flags = 'A', seq = tcp_seq, ack = tcp_ack)
-http_ack = sr1(ip/http_tcp/http_data)
+send(ip/http_tcp/http_data)
 tcp_seq = tcp_seq + len(http_data)
 
-tcp_ack = http_ack.ack
+# Wait for response
+time.sleep(wait_time)
 
-
-# FIN packet
-fin = TCP(sport = src_port, dport = dst_port, flags = 'FA', seq = tcp_seq, ack = tcp_ack)
-fin_resp = sr1(ip/fin)
-
-tcp_seq = tcp_seq + 1
-tcp_ack = tcp_ack + 1
-ack = TCP(sport = src_port, dport = dst_port, flags = 'A', seq = tcp_seq, ack = tcp_ack)
-send(ip/ack)
+# Close connection with TCP reset
+reset = TCP(sport = src_port, dport = dst_port, flags = 'R', seq = tcp_seq, ack = 0)
+send(ip/reset)
